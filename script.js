@@ -1,4 +1,3 @@
-
 let myArray = [
   {
     "id": "5c2286fb23e87be312d55d9a",
@@ -502,117 +501,127 @@ let myArray = [
   }
 ]
 
+buildTable(myArray) // отрисовываем таблицу при загрузке страницы
 
+let table = document.getElementById('myTable')
 
-buildTable(myArray)
-
-function buildTable(jsonData) {
-  localStorage.getItem('jsonData') ? '' : localStorage.setItem('jsonData', JSON.stringify(jsonData));
+function buildTable(jsonData) { // функция отрисовки страницы
+  localStorage.getItem('jsonData') ? '' : localStorage.setItem('jsonData', JSON.stringify(jsonData)); // получаем таблицу из localstorage, если там ничего нет, то добавляем json файл туда
   const data = localStorage.getItem('jsonData') ? JSON.parse(localStorage.getItem('jsonData')) : jsonData
   let table = document.getElementById("myTable")
-  for (let i = 0; i < data.length; i++) {
-    let row = `<tr class='id' id=${data[i].id}>
-          <td class='firstName'  >${data[i].name.firstName}</td>
-          <td class='secondName'  >${data[i].name.lastName}</td>
-          <td class='about'  >${data[i].about} </td>
-          <td class='eye-color'  style="background:${data[i].eyeColor}; color:${data[i].eyeColor}" >${data[i].eyeColor}</td>
+  let tableContent = ''
+  for (let i = 0; i < data.length; i++) { // элемент отрисовки таблицы по данным из неё
+    let row = `<tr  data-index='${i}'>
+          <td class='firstName'  data-index='${i}'>${data[i].name.firstName}</td>
+          <td class='secondName'  data-index='${i}'>${data[i].name.lastName}</td>
+          <td class='about'  data-index='${i}'>${data[i].about} </td>
+          <td class='eye-color' data-index='${i}' style="background:${data[i].eyeColor}; color:${data[i].eyeColor}" >${data[i].eyeColor}</td>
           </tr>`
-    table.innerHTML += row
+    tableContent = tableContent + row
   }
-
-
+  table.innerHTML = tableContent
 }
-
 th = document.getElementsByTagName("th")
 
 for (c = 0; c < th.length; c++) {
-  th[c].addEventListener("click", item(c))
+  th[c].addEventListener("click", item(c)) // сортируем таблицу по нажатию на столбец определённый
 }
 
 
-function item(c) {
+function fillEditForm(firstName, lastName, about, eyeColor, index) { // заполняет форму данными из таблицы
+  const $firstName = document.querySelector("#firstName");
+  const $lastName = document.querySelector("#lastName");
+  const $about = document.querySelector("#about");
+  const $eyeColor = document.querySelector("#eyeColor");
+  const $index = document.querySelector("#index-input");
+  $firstName.value = firstName;
+  $lastName.value = lastName;
+  $about.value = about;
+  $eyeColor.value = eyeColor;
+  $firstName.value = firstName;
+  $index.value = index;
+}
+
+function clearEditForm() { // очищает форму
+  const $firstName = document.querySelector("#firstName");
+  const $lastName = document.querySelector("#lastName");
+  const $about = document.querySelector("#about");
+  const $eyeColor = document.querySelector("#eyeColor");
+  const $index = document.querySelector("#index-input");
+  $firstName.value = '';
+  $lastName.value = '';
+  $about.value = '';
+  $eyeColor.value = '';
+  $firstName.value = '';
+  $index.value = '';
+}
+table.addEventListener('click', (event) => { // отрисовываем таблицу с новыми данными
+  let index = event.target.getAttribute("data-index");  // элемент получаем по его индексу
+
+  if (index) {
+    const {
+      name,
+      about,
+      eyeColor
+    } = myArray[index];
+
+    fillEditForm(name.firstName, name.lastName, about, eyeColor, index) // заполняем
+  }
+
+})
+
+function saveData() { // сохраняем данные в json
+  const $firstName = document.querySelector("#firstName");
+  const $lastName = document.querySelector("#lastName");
+  const $about = document.querySelector("#about");
+  const $eyeColor = document.querySelector("#eyeColor");
+  const $index = document.querySelector("#index-input");
+  let index = $index.value
+  let newElement = myArray[index] // добавляем изменённый элемент в таблицу
+  newElement.name.firstName = $firstName.value;
+  newElement.name.lastName = $lastName.value;
+  newElement.about = $about.value;
+  newElement.eyeColor = $eyeColor.value;
+  myArray[index] = newElement;
+  localStorage.setItem('jsonData', JSON.stringify(myArray))
+  buildTable(myArray)
+
+  clearEditForm() // отчищаем форму после редактирования таблицы
+}
+
+document.getElementById('btn-edit').addEventListener('click', saveData)
+
+
+function item(c) { // сортируем по Item
 
   return function () {
     sortTable(c)
   }
 }
 
-
-
-
-function sortTable(c) {
+function sortTable(c) { // сортируем таблицу
   let table, rows, switching, i, x, y, shouldSwitch;
   table = document.getElementById("myTable");
   switching = true;
-  /*Make a loop that will continue until
-  no switching has been done:*/
   while (switching) {
-    //start by saying: no switching is done:
     switching = false;
-    rows = table.rows;
-    /*Loop through all table rows (except the
-    first, which contains table headers):*/
+    rows = table.rows; //проходим по всей таблицы, кроме заголовков
     for (i = 0; i < (rows.length - 1); i++) {
-      //start by saying there should be no switching:
       shouldSwitch = false;
-      /*Get the two elements you want to compare,
-      one from current row and one from the next:*/
+      // сравниваем элемент в таблице со следующем
       x = rows[i].getElementsByTagName("TD")[c];
       y = rows[i + 1].getElementsByTagName("TD")[c];
-      //check if the two rows should switch place:
+      //проверяет можно ли поменять местами сортируемые элементы
       if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-        //if so, mark as a switch and break the loop:
+        //если просортировалось, ставим на стоп сортировку
         shouldSwitch = true;
         break;
       }
     }
     if (shouldSwitch) {
-      /*If a switch has been marked, make the switch
-      and mark that a switch has been done:*/
+      // если сортировка помечена, делаем сортьировку и помечаем что сортировка закончена
       rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
       switching = true;
     }
   }
 }
-
-let table = document.getElementById('myTable'), rIndex
-let inputs = document.querySelectorAll('input')
-let textarea = document.querySelector('textarea')
-
-for (let i = 0; i < table.rows.length; i++) {
-  table.rows[i].onclick = function () {
-    rIndex = this.rowIndex
-    console.log(rIndex);
-    inputs[0].value = this.cells[0].innerHTML;
-    inputs[1].value = this.cells[1].innerHTML;
-    textarea.value = this.cells[2].innerHTML;
-    inputs[2].value = this.cells[3].innerHTML;
-  };
-}
- 
-function editTableRow(jsonData) {
-  localStorage.setItem('firstName', inputs[0].value)
-  localStorage.setItem('secondName', inputs[1].value)
-  localStorage.setItem('about', textarea.value)
-  localStorage.setItem('eyeColor', inputs[2].value)
-  buildTable(jsonData)
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
